@@ -28,21 +28,9 @@ class MoreDetailsFragment : Fragment() {
     lateinit var scaleGestureDetector: ScaleGestureDetector
 
     private companion object Params {
-        const val INITIAL_ROTATION = 0f
         const val STIFFNESS = SpringForce.STIFFNESS_MEDIUM
-        const val DAMPING_RATIO = SpringForce.DAMPING_RATIO_HIGH_BOUNCY
         const val DAMPING_RATIO_SMALL = SpringForce.DAMPING_RATIO_LOW_BOUNCY
         const val INITIAL_SCALE = 1f
-
-        const val HIGH_BOUNCE = "High bounce"
-        const val MEDIUM_BOUNCE = "Medium bounce"
-        const val LOW_BOUNCE = "Low bounce"
-        const val NO_BOUNCE = "No bounce"
-
-        const val HIGH_STIFFNESS = "High stiffness"
-        const val MEDIUM_STIFFNESS = "Medium stiffness"
-        const val LOW_STIFFNESS = "Low stiffness"
-        const val VERY_LOW_STIFFNESS = "Very low stiffness"
     }
 
     override fun onCreateView(
