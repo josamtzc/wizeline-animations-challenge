@@ -1,12 +1,16 @@
 package com.wizeline.academy.animations.ui.more_details
 
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
+import androidx.annotation.FloatRange
+import androidx.dynamicanimation.animation.DynamicAnimation
+import androidx.dynamicanimation.animation.SpringAnimation
+import androidx.dynamicanimation.animation.SpringForce
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
+import androidx.transition.TransitionInflater
 import com.wizeline.academy.animations.databinding.MoreDetailsFragmentBinding
 import com.wizeline.academy.animations.utils.loadImage
 import dagger.hilt.android.AndroidEntryPoint
@@ -19,14 +23,99 @@ class MoreDetailsFragment : Fragment() {
     private val viewModel: MoreDetailsViewModel by viewModels()
     private val args: MoreDetailsFragmentArgs by navArgs()
 
+    lateinit var scaleXAnimation: SpringAnimation
+    lateinit var scaleYAnimation: SpringAnimation
+    lateinit var scaleGestureDetector: ScaleGestureDetector
+
+    private companion object Params {
+        const val INITIAL_ROTATION = 0f
+        const val STIFFNESS = SpringForce.STIFFNESS_MEDIUM
+        const val DAMPING_RATIO = SpringForce.DAMPING_RATIO_HIGH_BOUNCY
+        const val DAMPING_RATIO_SMALL = SpringForce.DAMPING_RATIO_LOW_BOUNCY
+        const val INITIAL_SCALE = 1f
+
+        const val HIGH_BOUNCE = "High bounce"
+        const val MEDIUM_BOUNCE = "Medium bounce"
+        const val LOW_BOUNCE = "Low bounce"
+        const val NO_BOUNCE = "No bounce"
+
+        const val HIGH_STIFFNESS = "High stiffness"
+        const val MEDIUM_STIFFNESS = "Medium stiffness"
+        const val LOW_STIFFNESS = "Low stiffness"
+        const val VERY_LOW_STIFFNESS = "Very low stiffness"
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = MoreDetailsFragmentBinding.inflate(inflater, container, false)
+        sharedElementEnterTransition =
+            TransitionInflater.from(requireContext()).inflateTransition(android.R.transition.move)
         binding.ivImageDetailLarge.loadImage(args.imageId)
+        setupScaleAnimation()
         return binding.root
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupScaleAnimation() {
+        scaleXAnimation = createSpringAnimation(
+            binding.ivImageDetailLarge,
+            SpringAnimation.SCALE_X,
+            INITIAL_SCALE,
+            STIFFNESS,
+            DAMPING_RATIO_SMALL
+        )
+        scaleYAnimation = createSpringAnimation(
+            binding.ivImageDetailLarge,
+            SpringAnimation.SCALE_Y,
+            INITIAL_SCALE,
+            STIFFNESS,
+            DAMPING_RATIO_SMALL
+        )
+
+        setupPinchToZoom()
+
+        binding.ivImageDetailLarge.setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                scaleXAnimation.start()
+                scaleYAnimation.start()
+            } else {
+                scaleXAnimation.cancel()
+                scaleYAnimation.cancel()
+                scaleGestureDetector.onTouchEvent(event)
+            }
+            true
+        }
+    }
+
+    private fun setupPinchToZoom() {
+        var scaleFactor = 1f
+        scaleGestureDetector = ScaleGestureDetector(requireContext(),
+            object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                override fun onScale(detector: ScaleGestureDetector): Boolean {
+                    scaleFactor *= detector.scaleFactor
+                    binding.ivImageDetailLarge.scaleX *= scaleFactor
+                    binding.ivImageDetailLarge.scaleY *= scaleFactor
+                    return true
+                }
+            })
+    }
+
+    private fun createSpringAnimation(
+        view: View,
+        property: DynamicAnimation.ViewProperty,
+        finalPosition: Float,
+        @FloatRange(from = 0.1) stiffness: Float,
+        @FloatRange(from = 0.1) dampingRatio: Float
+    ): SpringAnimation {
+        val animation = SpringAnimation(view, property)
+        val spring = SpringForce(finalPosition)
+        spring.stiffness = stiffness
+        spring.dampingRatio = dampingRatio
+        animation.spring = spring
+        return animation
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
